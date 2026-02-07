@@ -102,23 +102,27 @@ export function LibraryTabs({
                 key={c.id}
                 className="group relative rounded-lg border bg-card p-4 hover:shadow-md transition-shadow"
               >
-                <Link
-                  href={`/collections/${c.slug}`}
-                  className="flex-1 min-w-0"
-                >
-                  <h3 className="font-medium truncate group-hover:underline">
-                    {c.name}
-                  </h3>
+                <div className="flex-1 min-w-0">
+                  <Link href={`/collections/${c.slug}`}>
+                    <h3 className="font-medium truncate group-hover:underline">
+                      {c.name}
+                    </h3>
+                  </Link>
                   <p className="text-xs text-muted-foreground mt-0.5">
                     by{" "}
-                    {c.profiles.display_name || c.profiles.username}
+                    <Link
+                      href={`/users/${c.profiles.username}`}
+                      className="hover:text-foreground transition-colors"
+                    >
+                      {c.profiles.display_name || c.profiles.username}
+                    </Link>
                   </p>
                   {c.description && (
                     <p className="text-sm text-muted-foreground mt-1 line-clamp-2">
                       {c.description}
                     </p>
                   )}
-                </Link>
+                </div>
                 <div className="flex items-center gap-3 mt-3 text-xs text-muted-foreground">
                   <span className="flex items-center gap-1">
                     <Images className="h-3 w-3" />

@@ -3,6 +3,7 @@
 import Image from "next/image";
 import Link from "next/link";
 import { trackRecentImage } from "@/lib/actions/discover";
+import { CopyImageButton } from "@/components/copy-image-button";
 import type { ExploreImage } from "@/lib/types/database";
 
 interface ExploreCardProps {
@@ -48,15 +49,28 @@ export function ExploreCard({ image, supabaseUrl }: ExploreCardProps) {
       </a>
 
       <div className="p-2">
-        <p className="text-xs truncate">{image.title}</p>
-        <Link
-          href={`/collections/${image.collections.slug}`}
-          className="text-xs text-muted-foreground hover:text-foreground truncate block transition-colors"
-        >
-          {image.collections.name} &middot;{" "}
-          {image.collections.profiles.display_name ||
-            image.collections.profiles.username}
-        </Link>
+        <div className="flex items-center justify-between gap-1">
+          <p className="text-xs truncate flex-1 min-w-0">{image.title}</p>
+          <div className="opacity-0 group-hover:opacity-100 transition-opacity">
+            <CopyImageButton imageUrl={fullUrl} />
+          </div>
+        </div>
+        <p className="text-xs text-muted-foreground truncate">
+          <Link
+            href={`/collections/${image.collections.slug}`}
+            className="hover:text-foreground transition-colors"
+          >
+            {image.collections.name}
+          </Link>
+          {" "}&middot;{" "}
+          <Link
+            href={`/users/${image.collections.profiles.username}`}
+            className="hover:text-foreground transition-colors"
+          >
+            {image.collections.profiles.display_name ||
+              image.collections.profiles.username}
+          </Link>
+        </p>
       </div>
     </div>
   );

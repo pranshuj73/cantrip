@@ -11,6 +11,7 @@ import { ImageGrid } from "@/components/image-grid";
 import { FollowButton } from "@/components/follow-button";
 import { Images, Pencil, ArrowLeft } from "lucide-react";
 import Link from "next/link";
+import Image from "next/image";
 
 async function CollectionDetail({
   params,
@@ -36,6 +37,21 @@ async function CollectionDetail({
   const isFollowing = showFollow
     ? await isCollectionFollowed(collection.id)
     : false;
+
+  // Fetch owner profile for non-owners
+  let ownerProfile: {
+    username: string;
+    display_name: string | null;
+    avatar_url: string | null;
+  } | null = null;
+  if (!isOwner) {
+    const { data } = await supabase
+      .from("profiles")
+      .select("username, display_name, avatar_url")
+      .eq("id", collection.user_id)
+      .single();
+    ownerProfile = data;
+  }
 
   return (
     <div className="space-y-6">
@@ -69,6 +85,28 @@ async function CollectionDetail({
               <Images className="h-4 w-4" />
               {collection.image_count} images
             </span>
+            {!isOwner && ownerProfile && (
+              <Link
+                href={`/users/${ownerProfile.username}`}
+                className="flex items-center gap-1.5 hover:text-foreground transition-colors"
+              >
+                <div className="relative h-5 w-5 rounded-full overflow-hidden bg-muted shrink-0">
+                  {ownerProfile.avatar_url ? (
+                    <Image
+                      src={ownerProfile.avatar_url}
+                      alt={ownerProfile.display_name || ownerProfile.username}
+                      fill
+                      className="object-cover"
+                    />
+                  ) : (
+                    <div className="h-full w-full flex items-center justify-center text-[10px] font-medium text-muted-foreground">
+                      {(ownerProfile.display_name || ownerProfile.username)[0]?.toUpperCase()}
+                    </div>
+                  )}
+                </div>
+                {ownerProfile.display_name || ownerProfile.username}
+              </Link>
+            )}
           </div>
         </div>
         <div className="flex items-center gap-2">

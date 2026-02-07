@@ -16,6 +16,7 @@ import {
 } from "@/components/ui/dialog";
 import { deleteImage, updateImage } from "@/lib/actions/images";
 import { trackRecentImage } from "@/lib/actions/discover";
+import { CopyImageButton } from "@/components/copy-image-button";
 import type { Image as ImageType } from "@/lib/types/database";
 
 interface ImageCardProps {
@@ -108,52 +109,55 @@ export function ImageCard({
               </p>
             )}
           </div>
-          {isOwner && (
-            <div className="flex items-center gap-0.5 opacity-0 group-hover:opacity-100 transition-opacity">
-              <Button
-                size="icon"
-                variant="ghost"
-                className="h-6 w-6"
-                onClick={handleOpenEdit}
-              >
-                <Pencil className="h-3 w-3" />
-              </Button>
-              {showConfirm ? (
-                <div className="flex items-center gap-0.5">
+          <div className="flex items-center gap-0.5 opacity-0 group-hover:opacity-100 transition-opacity">
+            <CopyImageButton imageUrl={storageUrl} />
+            {isOwner && (
+              <>
+                <Button
+                  size="icon"
+                  variant="ghost"
+                  className="h-6 w-6"
+                  onClick={handleOpenEdit}
+                >
+                  <Pencil className="h-3 w-3" />
+                </Button>
+                {showConfirm ? (
+                  <div className="flex items-center gap-0.5">
+                    <Button
+                      size="icon"
+                      variant="ghost"
+                      className="h-6 w-6 text-destructive"
+                      onClick={handleDelete}
+                      disabled={isDeleting}
+                    >
+                      {isDeleting ? (
+                        <Loader2 className="h-3 w-3 animate-spin" />
+                      ) : (
+                        <Check className="h-3 w-3" />
+                      )}
+                    </Button>
+                    <Button
+                      size="icon"
+                      variant="ghost"
+                      className="h-6 w-6"
+                      onClick={() => setShowConfirm(false)}
+                    >
+                      <X className="h-3 w-3" />
+                    </Button>
+                  </div>
+                ) : (
                   <Button
                     size="icon"
                     variant="ghost"
                     className="h-6 w-6 text-destructive"
-                    onClick={handleDelete}
-                    disabled={isDeleting}
+                    onClick={() => setShowConfirm(true)}
                   >
-                    {isDeleting ? (
-                      <Loader2 className="h-3 w-3 animate-spin" />
-                    ) : (
-                      <Check className="h-3 w-3" />
-                    )}
+                    <Trash2 className="h-3 w-3" />
                   </Button>
-                  <Button
-                    size="icon"
-                    variant="ghost"
-                    className="h-6 w-6"
-                    onClick={() => setShowConfirm(false)}
-                  >
-                    <X className="h-3 w-3" />
-                  </Button>
-                </div>
-              ) : (
-                <Button
-                  size="icon"
-                  variant="ghost"
-                  className="h-6 w-6 text-destructive"
-                  onClick={() => setShowConfirm(true)}
-                >
-                  <Trash2 className="h-3 w-3" />
-                </Button>
-              )}
-            </div>
-          )}
+                )}
+              </>
+            )}
+          </div>
         </div>
       </div>
 

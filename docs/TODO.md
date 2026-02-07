@@ -46,7 +46,14 @@
 ### 📋 Planned
 
 #### Phase 5: Social Features
-- [ ] Build user profile pages
+- [x] Copy image to clipboard button on image cards (components/copy-image-button.tsx)
+- [x] Profile settings page with avatar upload, username, display name, bio (app/(dashboard)/settings/profile/page.tsx)
+- [x] Avatar upload API with sharp processing (app/api/avatar/upload/route.ts)
+- [x] Avatars storage bucket migration (supabase/migrations/00005_avatars_bucket.sql)
+- [x] Profile server actions — get/update profile, public collections (lib/actions/profile.ts)
+- [x] User menu dropdown with avatar in nav (components/user-menu.tsx, components/auth-button.tsx)
+- [x] Public user profile pages at /users/[username] (app/(dashboard)/users/[username]/page.tsx)
+- [x] Username links throughout app — explore cards, collection detail, library tabs
 - [ ] Add collection sharing
 
 #### Phase 6: Offline Support
