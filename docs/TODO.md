@@ -17,17 +17,17 @@
 - [x] Database functions (increment_daily_upload_count, increment_daily_collection_count)
 - [x] Auto-create profile on signup trigger
 - [x] TypeScript types for all database entities (lib/types/database.ts)
+- [x] Server Actions for collections CRUD (lib/actions/collections.ts)
+- [x] Collections list page with search (app/(dashboard)/collections/page.tsx)
+- [x] Create/edit collection UI with form component (components/collection-form.tsx)
+- [x] Collection detail page (app/(dashboard)/collections/[slug]/page.tsx)
+- [x] Collection actions dropdown — edit/delete (components/collection-actions.tsx)
+- [x] Dashboard layout with nav (app/(dashboard)/layout.tsx)
 
 ### 🚧 In Progress
 <!-- Empty for now -->
 
 ### 📋 Planned
-
-#### Phase 2: Collections Management
-- [ ] Create Server Actions for collections CRUD
-- [ ] Build collections list page
-- [ ] Build create/edit collection UI
-- [ ] Implement collection search
 
 #### Phase 3: Image Upload & Storage
 - [ ] Set up Supabase Storage buckets (images, avatars)
