@@ -4,6 +4,7 @@ import {
   getFollowedCollections,
 } from "@/lib/actions/discover";
 import { getMyCollections } from "@/lib/actions/collections";
+import { getCollectionPreviewImages } from "@/lib/actions/images";
 import { ImageGrid } from "@/components/image-grid";
 import { LibraryTabs } from "@/components/library-tabs";
 import { Clock, BookOpen } from "lucide-react";
@@ -17,6 +18,12 @@ async function LibraryContent() {
     ]);
 
   const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL!;
+
+  const allCollectionIds = [
+    ...ownedCollections.map((c) => c.id),
+    ...followedCollections.map((c) => c.id),
+  ];
+  const previewImages = await getCollectionPreviewImages(allCollectionIds);
 
   return (
     <div className="space-y-8">
@@ -56,6 +63,8 @@ async function LibraryContent() {
         <LibraryTabs
           ownedCollections={ownedCollections}
           followedCollections={followedCollections}
+          previewImages={previewImages}
+          supabaseUrl={supabaseUrl}
         />
       </section>
     </div>

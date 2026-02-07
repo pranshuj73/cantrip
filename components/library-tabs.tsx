@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Badge } from "@/components/ui/badge";
+import { CollectionPreview } from "@/components/collection-preview";
 import { FolderOpen, Images } from "lucide-react";
 import type { Collection } from "@/lib/types/database";
 
@@ -11,35 +12,50 @@ interface LibraryTabsProps {
   followedCollections: (Collection & {
     profiles: { username: string; display_name: string | null };
   })[];
+  previewImages: Record<string, string[]>;
+  supabaseUrl: string;
 }
 
-function CollectionCard({ collection }: { collection: Collection }) {
+function CollectionCard({
+  collection,
+  thumbnails,
+  supabaseUrl,
+}: {
+  collection: Collection;
+  thumbnails: string[];
+  supabaseUrl: string;
+}) {
   return (
-    <div className="group relative rounded-lg border bg-card p-4 hover:shadow-md transition-shadow">
-      <Link
-        href={`/collections/${collection.slug}`}
-        className="flex-1 min-w-0"
-      >
-        <h3 className="font-medium truncate group-hover:underline">
-          {collection.name}
-        </h3>
-        {collection.description && (
-          <p className="text-sm text-muted-foreground mt-1 line-clamp-2">
-            {collection.description}
-          </p>
-        )}
+    <div className="group relative rounded-lg border bg-card overflow-hidden hover:shadow-md transition-shadow">
+      <Link href={`/collections/${collection.slug}`}>
+        <CollectionPreview thumbnails={thumbnails} supabaseUrl={supabaseUrl} />
       </Link>
-      <div className="flex items-center gap-3 mt-3 text-xs text-muted-foreground">
-        <span className="flex items-center gap-1">
-          <Images className="h-3 w-3" />
-          {collection.image_count}
-        </span>
-        <Badge
-          variant={collection.is_public ? "default" : "secondary"}
-          className="text-xs"
+      <div className="p-4">
+        <Link
+          href={`/collections/${collection.slug}`}
+          className="flex-1 min-w-0"
         >
-          {collection.is_public ? "Public" : "Private"}
-        </Badge>
+          <h3 className="font-medium truncate group-hover:underline">
+            {collection.name}
+          </h3>
+          {collection.description && (
+            <p className="text-sm text-muted-foreground mt-1 line-clamp-2">
+              {collection.description}
+            </p>
+          )}
+        </Link>
+        <div className="flex items-center gap-3 mt-3 text-xs text-muted-foreground">
+          <span className="flex items-center gap-1">
+            <Images className="h-3 w-3" />
+            {collection.image_count}
+          </span>
+          <Badge
+            variant={collection.is_public ? "default" : "secondary"}
+            className="text-xs"
+          >
+            {collection.is_public ? "Public" : "Private"}
+          </Badge>
+        </div>
       </div>
     </div>
   );
@@ -48,6 +64,8 @@ function CollectionCard({ collection }: { collection: Collection }) {
 export function LibraryTabs({
   ownedCollections,
   followedCollections,
+  previewImages,
+  supabaseUrl,
 }: LibraryTabsProps) {
   return (
     <Tabs defaultValue="owned">
@@ -77,7 +95,12 @@ export function LibraryTabs({
         ) : (
           <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
             {ownedCollections.map((c) => (
-              <CollectionCard key={c.id} collection={c} />
+              <CollectionCard
+                key={c.id}
+                collection={c}
+                thumbnails={previewImages[c.id] || []}
+                supabaseUrl={supabaseUrl}
+              />
             ))}
           </div>
         )}
@@ -100,34 +123,42 @@ export function LibraryTabs({
             {followedCollections.map((c) => (
               <div
                 key={c.id}
-                className="group relative rounded-lg border bg-card p-4 hover:shadow-md transition-shadow"
+                className="group relative rounded-lg border bg-card overflow-hidden hover:shadow-md transition-shadow"
               >
-                <div className="flex-1 min-w-0">
-                  <Link href={`/collections/${c.slug}`}>
-                    <h3 className="font-medium truncate group-hover:underline">
-                      {c.name}
-                    </h3>
-                  </Link>
-                  <p className="text-xs text-muted-foreground mt-0.5">
-                    by{" "}
-                    <Link
-                      href={`/users/${c.profiles.username}`}
-                      className="hover:text-foreground transition-colors"
-                    >
-                      {c.profiles.display_name || c.profiles.username}
+                <Link href={`/collections/${c.slug}`}>
+                  <CollectionPreview
+                    thumbnails={previewImages[c.id] || []}
+                    supabaseUrl={supabaseUrl}
+                  />
+                </Link>
+                <div className="p-4">
+                  <div className="flex-1 min-w-0">
+                    <Link href={`/collections/${c.slug}`}>
+                      <h3 className="font-medium truncate group-hover:underline">
+                        {c.name}
+                      </h3>
                     </Link>
-                  </p>
-                  {c.description && (
-                    <p className="text-sm text-muted-foreground mt-1 line-clamp-2">
-                      {c.description}
+                    <p className="text-xs text-muted-foreground mt-0.5">
+                      by{" "}
+                      <Link
+                        href={`/users/${c.profiles.username}`}
+                        className="hover:text-foreground transition-colors"
+                      >
+                        {c.profiles.display_name || c.profiles.username}
+                      </Link>
                     </p>
-                  )}
-                </div>
-                <div className="flex items-center gap-3 mt-3 text-xs text-muted-foreground">
-                  <span className="flex items-center gap-1">
-                    <Images className="h-3 w-3" />
-                    {c.image_count}
-                  </span>
+                    {c.description && (
+                      <p className="text-sm text-muted-foreground mt-1 line-clamp-2">
+                        {c.description}
+                      </p>
+                    )}
+                  </div>
+                  <div className="flex items-center gap-3 mt-3 text-xs text-muted-foreground">
+                    <span className="flex items-center gap-1">
+                      <Images className="h-3 w-3" />
+                      {c.image_count}
+                    </span>
+                  </div>
                 </div>
               </div>
             ))}

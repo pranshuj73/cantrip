@@ -63,6 +63,32 @@ export async function deleteImage(
   return {};
 }
 
+export async function getCollectionPreviewImages(
+  collectionIds: string[],
+): Promise<Record<string, string[]>> {
+  if (collectionIds.length === 0) return {};
+
+  const supabase = await createClient();
+
+  const { data, error } = await supabase
+    .from("images")
+    .select("collection_id, thumbnail_path, file_path")
+    .in("collection_id", collectionIds)
+    .order("created_at", { ascending: false });
+
+  if (error || !data) return {};
+
+  const result: Record<string, string[]> = {};
+  for (const row of data) {
+    const id = row.collection_id;
+    if (!result[id]) result[id] = [];
+    if (result[id].length < 4) {
+      result[id].push(row.thumbnail_path || row.file_path);
+    }
+  }
+  return result;
+}
+
 export async function updateImage(
   imageId: string,
   fields: { title?: string; description?: string },

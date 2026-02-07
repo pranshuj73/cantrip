@@ -10,44 +10,55 @@ import { Plus, FolderOpen, Images, Search, Pin } from "lucide-react";
 import Link from "next/link";
 import { Input } from "@/components/ui/input";
 import { CollectionActions } from "@/components/collection-actions";
+import { CollectionPreview } from "@/components/collection-preview";
+import { getCollectionPreviewImages } from "@/lib/actions/images";
 import type { Collection } from "@/lib/types/database";
 
 function CollectionCard({
   collection,
   isPinned,
+  thumbnails,
+  supabaseUrl,
 }: {
   collection: Collection;
   isPinned: boolean;
+  thumbnails: string[];
+  supabaseUrl: string;
 }) {
   return (
-    <div className="group relative rounded-lg border bg-card p-4 hover:shadow-md transition-shadow">
-      <div className="flex items-start justify-between">
-        <Link
-          href={`/collections/${collection.slug}`}
-          className="flex-1 min-w-0"
-        >
-          <h3 className="font-medium truncate group-hover:underline">
-            {collection.name}
-          </h3>
-          {collection.description && (
-            <p className="text-sm text-muted-foreground mt-1 line-clamp-2">
-              {collection.description}
-            </p>
-          )}
-        </Link>
-        <CollectionActions collection={collection} isPinned={isPinned} />
-      </div>
-      <div className="flex items-center gap-3 mt-3 text-xs text-muted-foreground">
-        <span className="flex items-center gap-1">
-          <Images className="h-3 w-3" />
-          {collection.image_count}
-        </span>
-        <Badge
-          variant={collection.is_public ? "default" : "secondary"}
-          className="text-xs"
-        >
-          {collection.is_public ? "Public" : "Private"}
-        </Badge>
+    <div className="group relative rounded-lg border bg-card overflow-hidden hover:shadow-md transition-shadow">
+      <Link href={`/collections/${collection.slug}`}>
+        <CollectionPreview thumbnails={thumbnails} supabaseUrl={supabaseUrl} />
+      </Link>
+      <div className="p-4">
+        <div className="flex items-start justify-between">
+          <Link
+            href={`/collections/${collection.slug}`}
+            className="flex-1 min-w-0"
+          >
+            <h3 className="font-medium truncate group-hover:underline">
+              {collection.name}
+            </h3>
+            {collection.description && (
+              <p className="text-sm text-muted-foreground mt-1 line-clamp-2">
+                {collection.description}
+              </p>
+            )}
+          </Link>
+          <CollectionActions collection={collection} isPinned={isPinned} />
+        </div>
+        <div className="flex items-center gap-3 mt-3 text-xs text-muted-foreground">
+          <span className="flex items-center gap-1">
+            <Images className="h-3 w-3" />
+            {collection.image_count}
+          </span>
+          <Badge
+            variant={collection.is_public ? "default" : "secondary"}
+            className="text-xs"
+          >
+            {collection.is_public ? "Public" : "Private"}
+          </Badge>
+        </div>
       </div>
     </div>
   );
@@ -64,6 +75,14 @@ async function CollectionsContent({
     getPinnedCollections(),
     getPinnedCollectionIds(),
   ]);
+
+  const allIds = [
+    ...collections.map((c) => c.id),
+    ...pinnedCollections.map((c) => c.id),
+  ];
+  const uniqueIds = [...new Set(allIds)];
+  const previewImages = await getCollectionPreviewImages(uniqueIds);
+  const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL!;
 
   const isSearching = !!(q && q.trim());
 
@@ -101,6 +120,8 @@ async function CollectionsContent({
                 key={collection.id}
                 collection={collection}
                 isPinned={true}
+                thumbnails={previewImages[collection.id] || []}
+                supabaseUrl={supabaseUrl}
               />
             ))}
           </div>
@@ -140,6 +161,8 @@ async function CollectionsContent({
               key={collection.id}
               collection={collection}
               isPinned={pinnedIds.has(collection.id)}
+              thumbnails={previewImages[collection.id] || []}
+              supabaseUrl={supabaseUrl}
             />
           ))}
         </div>

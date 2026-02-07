@@ -6,6 +6,8 @@ import {
   getProfileByUsername,
   getPublicCollectionsByUserId,
 } from "@/lib/actions/profile";
+import { getCollectionPreviewImages } from "@/lib/actions/images";
+import { CollectionPreview } from "@/components/collection-preview";
 import { Badge } from "@/components/ui/badge";
 import { Images, FolderOpen } from "lucide-react";
 
@@ -22,6 +24,10 @@ async function UserProfile({
   }
 
   const collections = await getPublicCollectionsByUserId(profile.id);
+  const previewImages = await getCollectionPreviewImages(
+    collections.map((c) => c.id),
+  );
+  const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL!;
 
   return (
     <div className="space-y-8">
@@ -66,24 +72,30 @@ async function UserProfile({
               <Link
                 key={c.id}
                 href={`/collections/${c.slug}`}
-                className="group rounded-lg border bg-card p-4 hover:shadow-md transition-shadow"
+                className="group rounded-lg border bg-card overflow-hidden hover:shadow-md transition-shadow"
               >
-                <h3 className="font-medium truncate group-hover:underline">
-                  {c.name}
-                </h3>
-                {c.description && (
-                  <p className="text-sm text-muted-foreground mt-1 line-clamp-2">
-                    {c.description}
-                  </p>
-                )}
-                <div className="flex items-center gap-3 mt-3 text-xs text-muted-foreground">
-                  <span className="flex items-center gap-1">
-                    <Images className="h-3 w-3" />
-                    {c.image_count}
-                  </span>
-                  <Badge variant="default" className="text-xs">
-                    Public
-                  </Badge>
+                <CollectionPreview
+                  thumbnails={previewImages[c.id] || []}
+                  supabaseUrl={supabaseUrl}
+                />
+                <div className="p-4">
+                  <h3 className="font-medium truncate group-hover:underline">
+                    {c.name}
+                  </h3>
+                  {c.description && (
+                    <p className="text-sm text-muted-foreground mt-1 line-clamp-2">
+                      {c.description}
+                    </p>
+                  )}
+                  <div className="flex items-center gap-3 mt-3 text-xs text-muted-foreground">
+                    <span className="flex items-center gap-1">
+                      <Images className="h-3 w-3" />
+                      {c.image_count}
+                    </span>
+                    <Badge variant="default" className="text-xs">
+                      Public
+                    </Badge>
+                  </div>
                 </div>
               </Link>
             ))}
