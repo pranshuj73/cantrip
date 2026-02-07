@@ -57,12 +57,12 @@
 - [ ] Add collection sharing
 
 #### Phase 6: Offline Support
-- [ ] Implement Service Worker
-- [ ] Set up IndexedDB for offline storage
-- [ ] Add offline upload queue
-- [ ] Implement background sync
-- [ ] Create PWA manifest
-- [ ] Build offline indicator UI
+- [x] Implement Service Worker
+- [x] Set up IndexedDB for offline storage
+- [x] Add offline upload queue
+- [x] Implement background sync
+- [x] Create PWA manifest
+- [x] Build offline indicator UI
 
 #### Phase 7: Performance & Polish
 - [ ] Optimize image loading:

@@ -1,11 +1,13 @@
 import imageCompression from "browser-image-compression";
+import { addToUploadQueue } from "@/lib/offline/upload-queue";
 
 export type UploadStatus =
   | "pending"
   | "compressing"
   | "uploading"
   | "success"
-  | "error";
+  | "error"
+  | "queued";
 
 export interface UploadProgress {
   fileId: string;
@@ -131,6 +133,19 @@ async function processFile(
       initialQuality: 0.85,
     });
 
+    // If offline, queue for background sync
+    if (typeof navigator !== "undefined" && !navigator.onLine) {
+      await addToUploadQueue({
+        blob: compressed,
+        collectionId,
+        title: metadata.title,
+        description: metadata.description,
+        originalSize: file.size,
+      });
+      update({ status: "queued", progress: 100 });
+      return;
+    }
+
     update({ status: "uploading", progress: 50 });
 
     // Upload
@@ -159,6 +174,23 @@ async function processFile(
       imageId: result.image?.id,
     });
   } catch (err) {
+    // If offline during fetch, queue for later
+    if (typeof navigator !== "undefined" && !navigator.onLine) {
+      try {
+        await addToUploadQueue({
+          blob: file,
+          collectionId,
+          title: metadata.title,
+          description: metadata.description,
+          originalSize: file.size,
+        });
+        update({ status: "queued", progress: 100 });
+        return;
+      } catch {
+        // Fall through to error
+      }
+    }
+
     update({
       status: "error",
       progress: 0,

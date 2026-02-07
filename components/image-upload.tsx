@@ -319,6 +319,8 @@ function StatusIcon({ status }: { status: UploadProgress["status"] }) {
       );
     case "error":
       return <XCircle className="h-4 w-4 text-destructive shrink-0" />;
+    case "queued":
+      return <Upload className="h-4 w-4 text-yellow-500 dark:text-yellow-400 shrink-0" />;
   }
 }
 
@@ -340,5 +342,7 @@ function StatusText({
       return "Done";
     case "error":
       return error || "Failed";
+    case "queued":
+      return "Queued for sync";
   }
 }
