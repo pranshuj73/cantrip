@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import Image from "next/image";
-import { Trash2, Pencil, Check, X, Loader2 } from "lucide-react";
+import { Trash2, Pencil, Check, Loader2, Copy, ExternalLink } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
@@ -16,7 +16,6 @@ import {
 } from "@/components/ui/dialog";
 import { deleteImage, updateImage } from "@/lib/actions/images";
 import { trackRecentImage } from "@/lib/actions/discover";
-import { CopyImageButton } from "@/components/copy-image-button";
 import type { Image as ImageType } from "@/lib/types/database";
 
 interface ImageCardProps {
@@ -37,14 +36,15 @@ export function ImageCard({
   const [description, setDescription] = useState(image.description ?? "");
   const [isDeleting, setIsDeleting] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
-  const [showConfirm, setShowConfirm] = useState(false);
+  const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
+  const [copied, setCopied] = useState(false);
 
   async function handleDelete() {
     setIsDeleting(true);
     const result = await deleteImage(image.id);
     if (result.error) {
       setIsDeleting(false);
-      setShowConfirm(false);
+      setShowDeleteConfirm(false);
     }
   }
 
@@ -72,21 +72,46 @@ export function ImageCard({
   function handleOpenEdit() {
     setTitle(image.title);
     setDescription(image.description ?? "");
+    setShowDeleteConfirm(false);
     setEditOpen(true);
   }
 
   return (
     <div className="group relative rounded-lg border bg-card overflow-hidden">
-      <a
-        href={storageUrl}
-        target="_blank"
-        rel="noopener noreferrer"
-        className="block aspect-square relative bg-muted"
-        onClick={() => {
+      <div
+        role="button"
+        className="block aspect-square relative bg-muted cursor-pointer"
+        onClick={async () => {
           try {
             trackRecentImage(image.id);
           } catch {
             // silent fail
+          }
+          try {
+            const img = new window.Image();
+            img.crossOrigin = "anonymous";
+            await new Promise<void>((resolve, reject) => {
+              img.onload = () => resolve();
+              img.onerror = () => reject();
+              img.src = storageUrl;
+            });
+            const canvas = document.createElement("canvas");
+            canvas.width = img.naturalWidth;
+            canvas.height = img.naturalHeight;
+            canvas.getContext("2d")!.drawImage(img, 0, 0);
+            const pngBlob = await new Promise<Blob>((resolve, reject) => {
+              canvas.toBlob(
+                (b) => (b ? resolve(b) : reject()),
+                "image/png",
+              );
+            });
+            await navigator.clipboard.write([
+              new ClipboardItem({ "image/png": pngBlob }),
+            ]);
+            setCopied(true);
+            setTimeout(() => setCopied(false), 1500);
+          } catch {
+            // Clipboard API not supported or permission denied
           }
         }}
       >
@@ -94,10 +119,33 @@ export function ImageCard({
           src={thumbnailUrl}
           alt={image.title}
           fill
-          className="object-cover"
+          className="object-cover group-hover:opacity-60 transition-opacity"
           sizes="(max-width: 640px) 50vw, (max-width: 768px) 33vw, 25vw"
         />
-      </a>
+        {copied ? (
+          <div className="absolute inset-0 flex items-center justify-center z-10">
+            <div className="flex items-center gap-1.5 rounded-full bg-white px-3 py-1.5 text-xs font-medium text-black">
+              <Check className="h-4 w-4 text-green-600" />
+              Copied
+            </div>
+          </div>
+        ) : (
+          <div className="absolute inset-0 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity z-10">
+            <div className="rounded-full bg-white p-3 shadow-md">
+              <Copy className="h-6 w-6 text-black" />
+            </div>
+          </div>
+        )}
+        <a
+          href={storageUrl}
+          target="_blank"
+          rel="noopener noreferrer"
+          className="absolute top-1.5 right-1.5 rounded-full bg-white/80 p-1.5 opacity-0 group-hover:opacity-100 transition-opacity z-20 hover:bg-white"
+          onClick={(e) => e.stopPropagation()}
+        >
+          <ExternalLink className="h-3.5 w-3.5 text-black" />
+        </a>
+      </div>
 
       <div className="p-2">
         <div className="flex items-center justify-between gap-1">
@@ -109,55 +157,15 @@ export function ImageCard({
               </p>
             )}
           </div>
-          <div className="flex items-center gap-0.5 opacity-0 group-hover:opacity-100 transition-opacity">
-            <CopyImageButton imageUrl={storageUrl} />
-            {isOwner && (
-              <>
-                <Button
-                  size="icon"
-                  variant="ghost"
-                  className="h-6 w-6"
-                  onClick={handleOpenEdit}
-                >
-                  <Pencil className="h-3 w-3" />
-                </Button>
-                {showConfirm ? (
-                  <div className="flex items-center gap-0.5">
-                    <Button
-                      size="icon"
-                      variant="ghost"
-                      className="h-6 w-6 text-destructive"
-                      onClick={handleDelete}
-                      disabled={isDeleting}
-                    >
-                      {isDeleting ? (
-                        <Loader2 className="h-3 w-3 animate-spin" />
-                      ) : (
-                        <Check className="h-3 w-3" />
-                      )}
-                    </Button>
-                    <Button
-                      size="icon"
-                      variant="ghost"
-                      className="h-6 w-6"
-                      onClick={() => setShowConfirm(false)}
-                    >
-                      <X className="h-3 w-3" />
-                    </Button>
-                  </div>
-                ) : (
-                  <Button
-                    size="icon"
-                    variant="ghost"
-                    className="h-6 w-6 text-destructive"
-                    onClick={() => setShowConfirm(true)}
-                  >
-                    <Trash2 className="h-3 w-3" />
-                  </Button>
-                )}
-              </>
-            )}
-          </div>
+          {isOwner && (
+            <button
+              onClick={handleOpenEdit}
+              className="flex items-center gap-1 rounded-full bg-white text-black px-2 py-0.5 text-xs font-medium opacity-0 group-hover:opacity-100 transition-opacity shadow-sm hover:bg-gray-100"
+            >
+              <Pencil className="h-3 w-3" />
+              Edit
+            </button>
+          )}
         </div>
       </div>
 
@@ -192,20 +200,56 @@ export function ImageCard({
               />
             </div>
           </div>
-          <DialogFooter>
-            <Button variant="outline" onClick={() => setEditOpen(false)}>
-              Cancel
-            </Button>
-            <Button onClick={handleSave} disabled={isSaving}>
-              {isSaving ? (
-                <>
-                  <Loader2 className="h-4 w-4 animate-spin" />
-                  Saving...
-                </>
-              ) : (
-                "Save"
-              )}
-            </Button>
+          <DialogFooter className="flex !justify-between">
+            {showDeleteConfirm ? (
+              <div className="flex items-center gap-2">
+                <span className="text-sm text-destructive">Delete?</span>
+                <Button
+                  variant="destructive"
+                  size="sm"
+                  onClick={handleDelete}
+                  disabled={isDeleting}
+                >
+                  {isDeleting ? (
+                    <Loader2 className="h-4 w-4 animate-spin" />
+                  ) : (
+                    "Yes, delete"
+                  )}
+                </Button>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => setShowDeleteConfirm(false)}
+                >
+                  Cancel
+                </Button>
+              </div>
+            ) : (
+              <Button
+                variant="ghost"
+                size="sm"
+                className="text-destructive hover:text-destructive"
+                onClick={() => setShowDeleteConfirm(true)}
+              >
+                <Trash2 className="h-4 w-4" />
+                Delete
+              </Button>
+            )}
+            <div className="flex items-center gap-2">
+              <Button variant="outline" onClick={() => setEditOpen(false)}>
+                Cancel
+              </Button>
+              <Button onClick={handleSave} disabled={isSaving}>
+                {isSaving ? (
+                  <>
+                    <Loader2 className="h-4 w-4 animate-spin" />
+                    Saving...
+                  </>
+                ) : (
+                  "Save"
+                )}
+              </Button>
+            </div>
           </DialogFooter>
         </DialogContent>
       </Dialog>
