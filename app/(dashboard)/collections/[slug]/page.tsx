@@ -9,6 +9,7 @@ import { Button } from "@/components/ui/button";
 import { ImageUpload } from "@/components/image-upload";
 import { ImageGrid } from "@/components/image-grid";
 import { FollowButton } from "@/components/follow-button";
+import { ShareCollectionButton } from "@/components/share-collection-button";
 import { Images, Pencil, ArrowLeft } from "lucide-react";
 import Link from "next/link";
 import Image from "next/image";
@@ -110,6 +111,9 @@ async function CollectionDetail({
           </div>
         </div>
         <div className="flex items-center gap-2">
+          {collection.is_public && (
+            <ShareCollectionButton slug={collection.slug} />
+          )}
           {showFollow && (
             <FollowButton
               collectionId={collection.id}

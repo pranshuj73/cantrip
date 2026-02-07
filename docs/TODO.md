@@ -54,7 +54,7 @@
 - [x] User menu dropdown with avatar in nav (components/user-menu.tsx, components/auth-button.tsx)
 - [x] Public user profile pages at /users/[username] (app/(dashboard)/users/[username]/page.tsx)
 - [x] Username links throughout app — explore cards, collection detail, library tabs
-- [ ] Add collection sharing
+- [x] Add collection sharing (components/share-collection-button.tsx, components/collection-actions.tsx)
 
 #### Phase 6: Offline Support
 - [x] Implement Service Worker

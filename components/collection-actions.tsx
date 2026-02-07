@@ -1,6 +1,6 @@
 "use client";
 
-import { MoreHorizontal, Pencil, Trash2, Pin, PinOff } from "lucide-react";
+import { MoreHorizontal, Pencil, Trash2, Pin, PinOff, Share2, Check } from "lucide-react";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -25,6 +25,7 @@ export function CollectionActions({
 }: CollectionActionsProps) {
   const router = useRouter();
   const [isDeleting, setIsDeleting] = useState(false);
+  const [shareCopied, setShareCopied] = useState(false);
   const [isPinPending, startPinTransition] = useTransition();
   const [optimisticPinned, setOptimisticPinned] = useOptimistic(isPinned);
 
@@ -35,6 +36,17 @@ export function CollectionActions({
     setIsDeleting(true);
     await deleteCollection(collection.id);
     setIsDeleting(false);
+  }
+
+  async function handleShare() {
+    try {
+      const url = `${window.location.origin}/collections/${collection.slug}`;
+      await navigator.clipboard.writeText(url);
+      setShareCopied(true);
+      setTimeout(() => setShareCopied(false), 2000);
+    } catch {
+      // Clipboard API not supported or permission denied
+    }
   }
 
   function handleTogglePin() {
@@ -75,6 +87,21 @@ export function CollectionActions({
             </>
           )}
         </DropdownMenuItem>
+        {collection.is_public && (
+          <DropdownMenuItem onClick={handleShare}>
+            {shareCopied ? (
+              <>
+                <Check className="h-4 w-4 text-green-500" />
+                Copied!
+              </>
+            ) : (
+              <>
+                <Share2 className="h-4 w-4" />
+                Share
+              </>
+            )}
+          </DropdownMenuItem>
+        )}
         <DropdownMenuItem
           onClick={() => router.push(`/collections/${collection.slug}/edit`)}
         >
