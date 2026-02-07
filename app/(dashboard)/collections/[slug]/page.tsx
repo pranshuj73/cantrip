@@ -1,8 +1,12 @@
 import { Suspense } from "react";
 import { notFound } from "next/navigation";
 import { getCollectionBySlug } from "@/lib/actions/collections";
+import { getCollectionImages } from "@/lib/actions/images";
+import { createClient } from "@/lib/supabase/server";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
+import { ImageUpload } from "@/components/image-upload";
+import { ImageGrid } from "@/components/image-grid";
 import { Images, Pencil, ArrowLeft } from "lucide-react";
 import Link from "next/link";
 
@@ -17,6 +21,15 @@ async function CollectionDetail({
   if (!collection) {
     notFound();
   }
+
+  const supabase = await createClient();
+  const [images, { data: { user } }] = await Promise.all([
+    getCollectionImages(collection.id),
+    supabase.auth.getUser(),
+  ]);
+
+  const isOwner = user?.id === collection.user_id;
+  const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL!;
 
   return (
     <div className="space-y-6">
@@ -52,20 +65,32 @@ async function CollectionDetail({
             </span>
           </div>
         </div>
-        <Button variant="outline" asChild>
-          <Link href={`/collections/${collection.slug}/edit`}>
-            <Pencil className="h-4 w-4" />
-            Edit
-          </Link>
-        </Button>
+        {isOwner && (
+          <Button variant="outline" asChild>
+            <Link href={`/collections/${collection.slug}/edit`}>
+              <Pencil className="h-4 w-4" />
+              Edit
+            </Link>
+          </Button>
+        )}
       </div>
 
-      {collection.image_count === 0 && (
+      {isOwner && <ImageUpload collectionId={collection.id} />}
+
+      {images.length > 0 ? (
+        <ImageGrid
+          images={images}
+          supabaseUrl={supabaseUrl}
+          isOwner={isOwner}
+        />
+      ) : (
         <div className="flex flex-col items-center justify-center py-16 text-center border rounded-lg">
           <Images className="h-12 w-12 text-muted-foreground mb-4" />
           <h2 className="text-lg font-medium">No images yet</h2>
           <p className="text-muted-foreground text-sm mt-1">
-            Upload images to this collection to get started.
+            {isOwner
+              ? "Upload images to this collection to get started."
+              : "This collection has no images yet."}
           </p>
         </div>
       )}

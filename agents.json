@@ -1,0 +1,14 @@
+{
+  "agents": [
+    "claude-code",
+    "cursor"
+  ],
+  "scope": "project",
+  "skills": {
+    "frontend-design": "unknown",
+    "supabase-postgres-best-practices": "unknown",
+    "tailwind-setup": "unknown",
+    "vercel-react-best-practices": "unknown",
+    "web-design-guidelines": "unknown"
+  }
+}

@@ -23,26 +23,19 @@
 - [x] Collection detail page (app/(dashboard)/collections/[slug]/page.tsx)
 - [x] Collection actions dropdown — edit/delete (components/collection-actions.tsx)
 - [x] Dashboard layout with nav (app/(dashboard)/layout.tsx)
+- [x] Supabase Storage bucket (images) with RLS policies (supabase/migrations/00003_storage_buckets.sql)
+- [x] Image upload API route with server-side validation, WebP conversion, thumbnails, blurhash, MD5 dedup (app/api/images/upload/route.ts)
+- [x] Client-side bulk upload with browser-image-compression and progress tracking (lib/upload/bulk-upload.ts)
+- [x] Image upload UI with drag-and-drop (components/image-upload.tsx)
+- [x] Image grid display on collection detail page (components/image-grid.tsx, components/image-card.tsx)
+- [x] Image server actions: fetch, delete, update title (lib/actions/images.ts)
+- [x] Inline image title editing and delete with confirmation
+- [x] User storage quota enforcement in upload route
 
 ### 🚧 In Progress
 <!-- Empty for now -->
 
 ### 📋 Planned
-
-#### Phase 3: Image Upload & Storage
-- [ ] Set up Supabase Storage buckets (images, avatars)
-- [ ] Configure storage RLS policies
-- [ ] Build image upload API route with:
-  - Client-side compression (browser-image-compression)
-  - Server-side validation (MIME type, size, dimensions)
-  - Aggressive WebP conversion (quality 75-85)
-  - Thumbnail generation (400x400, 800x800)
-  - Blurhash generation for progressive loading
-  - MD5 hash for duplicate detection
-- [ ] Create bulk upload UI component (multi-file picker, parallel processing)
-- [ ] Add per-file progress tracking
-- [ ] Implement user storage quota tracking
-- [ ] Add image title editing
 
 #### Phase 4: Discovery Features
 - [ ] Build explore feed page (Pinterest-style)

@@ -36,6 +36,7 @@ export interface Image {
   collection_id: string
   user_id: string
   title: string
+  description: string | null
   file_path: string
   thumbnail_path: string | null
   original_size_bytes: number
