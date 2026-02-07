@@ -1,9 +1,9 @@
 "use client";
 
-import { useTransition } from "react";
+import { useOptimistic, useTransition } from "react";
 import { Button } from "@/components/ui/button";
 import { followCollection, unfollowCollection } from "@/lib/actions/discover";
-import { UserPlus, UserMinus, Loader2 } from "lucide-react";
+import { UserPlus, UserMinus } from "lucide-react";
 
 interface FollowButtonProps {
   collectionId: string;
@@ -12,10 +12,12 @@ interface FollowButtonProps {
 
 export function FollowButton({ collectionId, isFollowing }: FollowButtonProps) {
   const [isPending, startTransition] = useTransition();
+  const [optimisticFollowing, setOptimisticFollowing] = useOptimistic(isFollowing);
 
   function handleClick() {
     startTransition(async () => {
-      if (isFollowing) {
+      setOptimisticFollowing(!optimisticFollowing);
+      if (optimisticFollowing) {
         await unfollowCollection(collectionId);
       } else {
         await followCollection(collectionId);
@@ -25,14 +27,12 @@ export function FollowButton({ collectionId, isFollowing }: FollowButtonProps) {
 
   return (
     <Button
-      variant={isFollowing ? "outline" : "default"}
+      variant={optimisticFollowing ? "outline" : "default"}
       size="sm"
       onClick={handleClick}
       disabled={isPending}
     >
-      {isPending ? (
-        <Loader2 className="h-4 w-4 animate-spin" />
-      ) : isFollowing ? (
+      {optimisticFollowing ? (
         <>
           <UserMinus className="h-4 w-4" />
           Unfollow

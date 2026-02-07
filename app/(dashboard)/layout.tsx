@@ -2,6 +2,7 @@ import Link from "next/link";
 import { AuthButton } from "@/components/auth-button";
 import { ThemeSwitcher } from "@/components/theme-switcher";
 import { OfflineIndicator } from "@/components/offline-indicator";
+import { ErrorBoundary } from "@/components/error-boundary";
 import { Suspense } from "react";
 
 export default function DashboardLayout({
@@ -48,7 +49,7 @@ export default function DashboardLayout({
       </nav>
       <OfflineIndicator />
       <main className="flex-1 max-w-6xl mx-auto w-full px-4 py-8">
-        {children}
+        <ErrorBoundary>{children}</ErrorBoundary>
       </main>
     </div>
   );

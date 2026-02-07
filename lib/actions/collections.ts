@@ -1,6 +1,7 @@
 "use server";
 
 import { createClient } from "@/lib/supabase/server";
+import { checkRateLimit } from "@/lib/rate-limit";
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import type { Collection } from "@/lib/types/database";
@@ -34,6 +35,11 @@ export async function createCollection(
     return { error: "You must be logged in to create a collection." };
   }
 
+  const rateCheck = await checkRateLimit(user.id, "collection");
+  if (!rateCheck.allowed) {
+    return { error: rateCheck.reason };
+  }
+
   const name = formData.get("name") as string;
   const description = (formData.get("description") as string) || null;
   const isPublic = formData.get("isPublic") === "on";
@@ -63,6 +69,10 @@ export async function createCollection(
   if (error) {
     return { error: error.message };
   }
+
+  await supabase.rpc("increment_daily_collection_count", {
+    p_user_id: user.id,
+  });
 
   revalidatePath("/collections");
   redirect(`/collections/${data.slug}`);

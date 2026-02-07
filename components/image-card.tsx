@@ -1,7 +1,8 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useMemo } from "react";
 import Image from "next/image";
+import { blurhashToDataURL } from "@/lib/blurhash-url";
 import { Trash2, Pencil, Check, Loader2, Copy, ExternalLink } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -38,6 +39,7 @@ export function ImageCard({
   const [isSaving, setIsSaving] = useState(false);
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
   const [copied, setCopied] = useState(false);
+  const blurDataURL = useMemo(() => blurhashToDataURL(image.blurhash), [image.blurhash]);
 
   async function handleDelete() {
     setIsDeleting(true);
@@ -121,6 +123,8 @@ export function ImageCard({
           fill
           className="object-cover group-hover:opacity-60 transition-opacity"
           sizes="(max-width: 640px) 50vw, (max-width: 768px) 33vw, 25vw"
+          placeholder={blurDataURL ? "blur" : "empty"}
+          blurDataURL={blurDataURL}
         />
         {copied ? (
           <div className="absolute inset-0 flex items-center justify-center z-10">

@@ -1,9 +1,11 @@
 "use client";
 
+import { useMemo } from "react";
 import Image from "next/image";
 import Link from "next/link";
 import { trackRecentImage } from "@/lib/actions/discover";
 import { CopyImageButton } from "@/components/copy-image-button";
+import { blurhashToDataURL } from "@/lib/blurhash-url";
 import type { ExploreImage } from "@/lib/types/database";
 
 interface ExploreCardProps {
@@ -21,6 +23,7 @@ export function ExploreCard({ image, supabaseUrl }: ExploreCardProps) {
     image.thumbnail_path || image.file_path,
   );
   const fullUrl = getStorageUrl(supabaseUrl, image.file_path);
+  const blurDataURL = useMemo(() => blurhashToDataURL(image.blurhash), [image.blurhash]);
 
   function handleClick() {
     try {
@@ -45,6 +48,8 @@ export function ExploreCard({ image, supabaseUrl }: ExploreCardProps) {
           fill
           className="object-cover"
           sizes="(max-width: 640px) 50vw, (max-width: 768px) 33vw, 25vw"
+          placeholder={blurDataURL ? "blur" : "empty"}
+          blurDataURL={blurDataURL}
         />
       </a>
 

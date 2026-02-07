@@ -12,7 +12,7 @@ import { deleteCollection } from "@/lib/actions/collections";
 import { pinCollection, unpinCollection } from "@/lib/actions/discover";
 import type { Collection } from "@/lib/types/database";
 import { useRouter } from "next/navigation";
-import { useState } from "react";
+import { useState, useOptimistic, useTransition } from "react";
 
 interface CollectionActionsProps {
   collection: Collection;
@@ -25,6 +25,8 @@ export function CollectionActions({
 }: CollectionActionsProps) {
   const router = useRouter();
   const [isDeleting, setIsDeleting] = useState(false);
+  const [isPinPending, startPinTransition] = useTransition();
+  const [optimisticPinned, setOptimisticPinned] = useOptimistic(isPinned);
 
   async function handleDelete() {
     if (!confirm(`Delete "${collection.name}"? This cannot be undone.`)) {
@@ -35,12 +37,15 @@ export function CollectionActions({
     setIsDeleting(false);
   }
 
-  async function handleTogglePin() {
-    if (isPinned) {
-      await unpinCollection(collection.id);
-    } else {
-      await pinCollection(collection.id);
-    }
+  function handleTogglePin() {
+    startPinTransition(async () => {
+      setOptimisticPinned(!optimisticPinned);
+      if (optimisticPinned) {
+        await unpinCollection(collection.id);
+      } else {
+        await pinCollection(collection.id);
+      }
+    });
   }
 
   return (
@@ -58,7 +63,7 @@ export function CollectionActions({
       </DropdownMenuTrigger>
       <DropdownMenuContent align="end">
         <DropdownMenuItem onClick={handleTogglePin}>
-          {isPinned ? (
+          {optimisticPinned ? (
             <>
               <PinOff className="h-4 w-4" />
               Unpin
