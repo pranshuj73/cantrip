@@ -3,10 +3,12 @@ import { notFound } from "next/navigation";
 import { getCollectionBySlug } from "@/lib/actions/collections";
 import { getCollectionImages } from "@/lib/actions/images";
 import { createClient } from "@/lib/supabase/server";
+import { isCollectionFollowed } from "@/lib/actions/discover";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { ImageUpload } from "@/components/image-upload";
 import { ImageGrid } from "@/components/image-grid";
+import { FollowButton } from "@/components/follow-button";
 import { Images, Pencil, ArrowLeft } from "lucide-react";
 import Link from "next/link";
 
@@ -30,6 +32,10 @@ async function CollectionDetail({
 
   const isOwner = user?.id === collection.user_id;
   const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL!;
+  const showFollow = !isOwner && user && collection.is_public;
+  const isFollowing = showFollow
+    ? await isCollectionFollowed(collection.id)
+    : false;
 
   return (
     <div className="space-y-6">
@@ -65,14 +71,22 @@ async function CollectionDetail({
             </span>
           </div>
         </div>
-        {isOwner && (
-          <Button variant="outline" asChild>
-            <Link href={`/collections/${collection.slug}/edit`}>
-              <Pencil className="h-4 w-4" />
-              Edit
-            </Link>
-          </Button>
-        )}
+        <div className="flex items-center gap-2">
+          {showFollow && (
+            <FollowButton
+              collectionId={collection.id}
+              isFollowing={isFollowing}
+            />
+          )}
+          {isOwner && (
+            <Button variant="outline" asChild>
+              <Link href={`/collections/${collection.slug}/edit`}>
+                <Pencil className="h-4 w-4" />
+                Edit
+              </Link>
+            </Button>
+          )}
+        </div>
       </div>
 
       {isOwner && <ImageUpload collectionId={collection.id} />}

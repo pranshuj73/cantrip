@@ -32,21 +32,20 @@
 - [x] Inline image title editing and delete with confirmation
 - [x] User storage quota enforcement in upload route
 
+- [x] Explore feed page with cursor-based pagination and Load More (app/(dashboard)/explore/page.tsx)
+- [x] Public image search via tsvector full-text search (lib/actions/discover.ts)
+- [x] Recent images tracking — upsert on image click (lib/actions/discover.ts, components/image-card.tsx, components/explore-card.tsx)
+- [x] Library page with recent images + owned/followed collections tabs (app/(dashboard)/library/page.tsx, components/library-tabs.tsx)
+- [x] Pin/unpin collections — dropdown menu item + pinned section on collections page (components/collection-actions.tsx, app/(dashboard)/collections/page.tsx)
+- [x] Follow/unfollow collections — button on public collection detail pages (components/follow-button.tsx, app/(dashboard)/collections/[slug]/page.tsx)
+- [x] Nav updated with Explore and Library links (app/(dashboard)/layout.tsx)
+
 ### 🚧 In Progress
 <!-- Empty for now -->
 
 ### 📋 Planned
 
-#### Phase 4: Discovery Features
-- [ ] Build explore feed page (Pinterest-style)
-- [ ] Implement image search
-- [ ] Create recent images tracking system
-- [ ] Build library view (owned + followed collections)
-- [ ] Add pin/unpin collections functionality
-
 #### Phase 5: Social Features
-- [ ] Implement follow/unfollow collections
-- [ ] Add follower counts
 - [ ] Build user profile pages
 - [ ] Add collection sharing
 

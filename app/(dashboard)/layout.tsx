@@ -18,10 +18,22 @@ export default function DashboardLayout({
             </Link>
             <div className="flex items-center gap-4 text-sm text-muted-foreground">
               <Link
+                href="/explore"
+                className="hover:text-foreground transition-colors"
+              >
+                Explore
+              </Link>
+              <Link
                 href="/collections"
                 className="hover:text-foreground transition-colors"
               >
                 Collections
+              </Link>
+              <Link
+                href="/library"
+                className="hover:text-foreground transition-colors"
+              >
+                Library
               </Link>
             </div>
           </div>

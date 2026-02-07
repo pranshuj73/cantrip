@@ -1,6 +1,6 @@
 "use client";
 
-import { MoreHorizontal, Pencil, Trash2 } from "lucide-react";
+import { MoreHorizontal, Pencil, Trash2, Pin, PinOff } from "lucide-react";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -9,15 +9,20 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { Button } from "@/components/ui/button";
 import { deleteCollection } from "@/lib/actions/collections";
+import { pinCollection, unpinCollection } from "@/lib/actions/discover";
 import type { Collection } from "@/lib/types/database";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
 
+interface CollectionActionsProps {
+  collection: Collection;
+  isPinned?: boolean;
+}
+
 export function CollectionActions({
   collection,
-}: {
-  collection: Collection;
-}) {
+  isPinned = false,
+}: CollectionActionsProps) {
   const router = useRouter();
   const [isDeleting, setIsDeleting] = useState(false);
 
@@ -28,6 +33,14 @@ export function CollectionActions({
     setIsDeleting(true);
     await deleteCollection(collection.id);
     setIsDeleting(false);
+  }
+
+  async function handleTogglePin() {
+    if (isPinned) {
+      await unpinCollection(collection.id);
+    } else {
+      await pinCollection(collection.id);
+    }
   }
 
   return (
@@ -44,6 +57,19 @@ export function CollectionActions({
         </Button>
       </DropdownMenuTrigger>
       <DropdownMenuContent align="end">
+        <DropdownMenuItem onClick={handleTogglePin}>
+          {isPinned ? (
+            <>
+              <PinOff className="h-4 w-4" />
+              Unpin
+            </>
+          ) : (
+            <>
+              <Pin className="h-4 w-4" />
+              Pin
+            </>
+          )}
+        </DropdownMenuItem>
         <DropdownMenuItem
           onClick={() => router.push(`/collections/${collection.slug}/edit`)}
         >

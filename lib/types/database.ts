@@ -73,3 +73,25 @@ export interface RecentImage {
   image_id: string
   last_used_at: string
 }
+
+export interface ExploreImage {
+  id: string
+  title: string
+  description: string | null
+  thumbnail_path: string | null
+  file_path: string
+  blurhash: string | null
+  width: number | null
+  height: number | null
+  created_at: string
+  user_id: string
+  collection_id: string
+  collections: {
+    id: string
+    name: string
+    slug: string
+    is_public: boolean
+    user_id: string
+    profiles: { username: string; display_name: string | null }
+  }
+}

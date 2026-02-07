@@ -15,6 +15,7 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import { deleteImage, updateImage } from "@/lib/actions/images";
+import { trackRecentImage } from "@/lib/actions/discover";
 import type { Image as ImageType } from "@/lib/types/database";
 
 interface ImageCardProps {
@@ -80,6 +81,13 @@ export function ImageCard({
         target="_blank"
         rel="noopener noreferrer"
         className="block aspect-square relative bg-muted"
+        onClick={() => {
+          try {
+            trackRecentImage(image.id);
+          } catch {
+            // silent fail
+          }
+        }}
       >
         <Image
           src={thumbnailUrl}

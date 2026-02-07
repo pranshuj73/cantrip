@@ -1,11 +1,57 @@
 import { Suspense } from "react";
 import { getMyCollections } from "@/lib/actions/collections";
+import {
+  getPinnedCollections,
+  getPinnedCollectionIds,
+} from "@/lib/actions/discover";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { Plus, FolderOpen, Images, Search } from "lucide-react";
+import { Plus, FolderOpen, Images, Search, Pin } from "lucide-react";
 import Link from "next/link";
 import { Input } from "@/components/ui/input";
 import { CollectionActions } from "@/components/collection-actions";
+import type { Collection } from "@/lib/types/database";
+
+function CollectionCard({
+  collection,
+  isPinned,
+}: {
+  collection: Collection;
+  isPinned: boolean;
+}) {
+  return (
+    <div className="group relative rounded-lg border bg-card p-4 hover:shadow-md transition-shadow">
+      <div className="flex items-start justify-between">
+        <Link
+          href={`/collections/${collection.slug}`}
+          className="flex-1 min-w-0"
+        >
+          <h3 className="font-medium truncate group-hover:underline">
+            {collection.name}
+          </h3>
+          {collection.description && (
+            <p className="text-sm text-muted-foreground mt-1 line-clamp-2">
+              {collection.description}
+            </p>
+          )}
+        </Link>
+        <CollectionActions collection={collection} isPinned={isPinned} />
+      </div>
+      <div className="flex items-center gap-3 mt-3 text-xs text-muted-foreground">
+        <span className="flex items-center gap-1">
+          <Images className="h-3 w-3" />
+          {collection.image_count}
+        </span>
+        <Badge
+          variant={collection.is_public ? "default" : "secondary"}
+          className="text-xs"
+        >
+          {collection.is_public ? "Public" : "Private"}
+        </Badge>
+      </div>
+    </div>
+  );
+}
 
 async function CollectionsContent({
   searchParams,
@@ -13,7 +59,13 @@ async function CollectionsContent({
   searchParams: Promise<{ q?: string }>;
 }) {
   const { q } = await searchParams;
-  const collections = await getMyCollections(q);
+  const [collections, pinnedCollections, pinnedIds] = await Promise.all([
+    getMyCollections(q),
+    getPinnedCollections(),
+    getPinnedCollectionIds(),
+  ]);
+
+  const isSearching = !!(q && q.trim());
 
   return (
     <div className="space-y-6">
@@ -37,10 +89,28 @@ async function CollectionsContent({
         />
       </form>
 
+      {!isSearching && pinnedCollections.length > 0 && (
+        <section className="space-y-3">
+          <h2 className="text-sm font-medium text-muted-foreground flex items-center gap-1.5">
+            <Pin className="h-3.5 w-3.5" />
+            Pinned
+          </h2>
+          <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+            {pinnedCollections.map((collection) => (
+              <CollectionCard
+                key={collection.id}
+                collection={collection}
+                isPinned={true}
+              />
+            ))}
+          </div>
+        </section>
+      )}
+
       {collections.length === 0 ? (
         <div className="flex flex-col items-center justify-center py-16 text-center">
           <FolderOpen className="h-12 w-12 text-muted-foreground mb-4" />
-          {q ? (
+          {isSearching ? (
             <>
               <h2 className="text-lg font-medium">No results found</h2>
               <p className="text-muted-foreground text-sm mt-1">
@@ -66,39 +136,11 @@ async function CollectionsContent({
       ) : (
         <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
           {collections.map((collection) => (
-            <div
+            <CollectionCard
               key={collection.id}
-              className="group relative rounded-lg border bg-card p-4 hover:shadow-md transition-shadow"
-            >
-              <div className="flex items-start justify-between">
-                <Link
-                  href={`/collections/${collection.slug}`}
-                  className="flex-1 min-w-0"
-                >
-                  <h3 className="font-medium truncate group-hover:underline">
-                    {collection.name}
-                  </h3>
-                  {collection.description && (
-                    <p className="text-sm text-muted-foreground mt-1 line-clamp-2">
-                      {collection.description}
-                    </p>
-                  )}
-                </Link>
-                <CollectionActions collection={collection} />
-              </div>
-              <div className="flex items-center gap-3 mt-3 text-xs text-muted-foreground">
-                <span className="flex items-center gap-1">
-                  <Images className="h-3 w-3" />
-                  {collection.image_count}
-                </span>
-                <Badge
-                  variant={collection.is_public ? "default" : "secondary"}
-                  className="text-xs"
-                >
-                  {collection.is_public ? "Public" : "Private"}
-                </Badge>
-              </div>
-            </div>
+              collection={collection}
+              isPinned={pinnedIds.has(collection.id)}
+            />
           ))}
         </div>
       )}
