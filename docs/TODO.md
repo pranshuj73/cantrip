@@ -10,31 +10,18 @@
 - [x] Server/client Supabase client setup
 - [x] Protected route middleware
 - [x] Basic project structure
+- [x] Database schema (profiles, collections, images, pinned_collections, collection_followers, recent_images)
+- [x] Row Level Security (RLS) policies for all tables
+- [x] Aggressive indexing (GIN full-text search, B-tree, composite, partial indexes)
+- [x] Database triggers (image_count, follower_count, storage_used_bytes, updated_at, daily counter reset)
+- [x] Database functions (increment_daily_upload_count, increment_daily_collection_count)
+- [x] Auto-create profile on signup trigger
+- [x] TypeScript types for all database entities (lib/types/database.ts)
 
 ### 🚧 In Progress
 <!-- Empty for now -->
 
 ### 📋 Planned
-
-#### Phase 1: Core Database & Auth
-- [ ] Create database schema with optimization focus:
-  - profiles (with storage_used_bytes, daily_upload_count, last_upload_date)
-  - collections (with follower_count denormalized, is_flagged)
-  - images (with file_hash for duplicate detection, compressed_size)
-  - User quota tracking fields
-  - Rate limit tracking tables
-- [ ] Implement Row Level Security (RLS) policies
-- [ ] Add aggressive indexing:
-  - GIN indexes for full-text search
-  - B-tree indexes on frequently queried columns
-  - Composite indexes for common query patterns
-  - Partial indexes for is_public queries
-- [ ] Set up database triggers:
-  - image_count increment/decrement
-  - follower_count tracking
-  - storage_used_bytes calculation
-  - updated_at timestamps
-  - Automatic daily_upload_count reset
 
 #### Phase 2: Collections Management
 - [ ] Create Server Actions for collections CRUD
