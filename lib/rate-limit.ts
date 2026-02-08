@@ -27,8 +27,20 @@ export async function checkRateLimit(
     return { allowed: false, reason: "Profile not found" };
   }
 
+  // Check actual auth state for email verification (profiles.email_verified
+  // is a snapshot from signup and may be stale after OAuth linking)
   if (!profile.email_verified) {
-    return { allowed: false, reason: "Email must be verified before uploading" };
+    const { data: { user } } = await supabase.auth.getUser();
+    const isVerified = !!user?.email_confirmed_at;
+    if (isVerified) {
+      // Sync the stale profile field
+      await supabase
+        .from("profiles")
+        .update({ email_verified: true })
+        .eq("id", userId);
+    } else {
+      return { allowed: false, reason: "Email must be verified before uploading" };
+    }
   }
 
   const accountAge = Date.now() - new Date(profile.account_created_at).getTime();

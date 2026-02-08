@@ -14,6 +14,7 @@ import {
   CheckCircle2,
   XCircle,
   ImagePlus,
+  RotateCw,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -47,6 +48,7 @@ export function ImageUpload({ collectionId }: ImageUploadProps) {
   const [isUploading, setIsUploading] = useState(false);
   const [isDragOver, setIsDragOver] = useState(false);
   const inputRef = useRef<HTMLInputElement>(null);
+  const failedFilesRef = useRef<Map<string, { file: File; metadata: FileMetadata }>>(new Map());
   const router = useRouter();
 
   const openDialog = useCallback((fileList: FileList | File[]) => {
@@ -86,7 +88,15 @@ export function ImageUpload({ collectionId }: ImageUploadProps) {
       URL.revokeObjectURL(p.preview);
     }
 
-    await bulkUploadImages(
+    // Store files for potential retry
+    for (const p of validFiles) {
+      const meta = metadata.get(p.file.name);
+      if (meta) {
+        failedFilesRef.current.set(p.file.name, { file: p.file, metadata: meta });
+      }
+    }
+
+    const results = await bulkUploadImages(
       validFiles.map((p) => p.file),
       collectionId,
       metadata,
@@ -95,10 +105,60 @@ export function ImageUpload({ collectionId }: ImageUploadProps) {
       },
     );
 
+    // Clear successful files from retry map
+    for (const r of results) {
+      if (r.status === "success") {
+        failedFilesRef.current.delete(r.fileName);
+      }
+    }
+
     setIsUploading(false);
     setPendingFiles([]);
     router.refresh();
   }, [pendingFiles, collectionId, router]);
+
+  const handleRetryFailed = useCallback(async () => {
+    const failedUploads = uploads.filter((u) => u.status === "error");
+    if (failedUploads.length === 0) return;
+
+    const filesToRetry: File[] = [];
+    const metadata = new Map<string, FileMetadata>();
+
+    for (const failed of failedUploads) {
+      const stored = failedFilesRef.current.get(failed.fileName);
+      if (stored) {
+        filesToRetry.push(stored.file);
+        metadata.set(stored.file.name, stored.metadata);
+      }
+    }
+
+    if (filesToRetry.length === 0) return;
+
+    // Keep successful uploads, remove failed ones (they'll be re-added by bulkUpload)
+    setUploads((prev) => prev.filter((u) => u.status !== "error"));
+    setIsUploading(true);
+
+    const results = await bulkUploadImages(
+      filesToRetry,
+      collectionId,
+      metadata,
+      (progress) => {
+        setUploads((prev) => {
+          const kept = prev.filter((u) => u.status !== "error" && u.status !== "pending" && u.status !== "compressing" && u.status !== "uploading");
+          return [...kept, ...progress];
+        });
+      },
+    );
+
+    for (const r of results) {
+      if (r.status === "success") {
+        failedFilesRef.current.delete(r.fileName);
+      }
+    }
+
+    setIsUploading(false);
+    router.refresh();
+  }, [uploads, collectionId, router]);
 
   const handleCloseDialog = useCallback(() => {
     for (const p of pendingFiles) {
@@ -274,13 +334,28 @@ export function ImageUpload({ collectionId }: ImageUploadProps) {
                 {successCount} of {uploads.length} uploaded
                 {errorCount > 0 && ` (${errorCount} failed)`}
               </p>
-              <Button
-                variant="ghost"
-                size="sm"
-                onClick={() => setUploads([])}
-              >
-                Dismiss
-              </Button>
+              <div className="flex items-center gap-1">
+                {errorCount > 0 && (
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    onClick={handleRetryFailed}
+                  >
+                    <RotateCw className="h-3.5 w-3.5 mr-1" />
+                    Retry failed
+                  </Button>
+                )}
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={() => {
+                    setUploads([]);
+                    failedFilesRef.current.clear();
+                  }}
+                >
+                  Dismiss
+                </Button>
+              </div>
             </div>
           )}
 
