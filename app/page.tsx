@@ -1,11 +1,19 @@
 import { AuthButton } from "@/components/auth-button";
 import { ThemeSwitcher } from "@/components/theme-switcher";
+import { createClient } from "@/lib/supabase/server";
+import { redirect } from "next/navigation";
 import Link from "next/link";
 import { Suspense } from "react";
 import { Sparkles, Images, Users, Zap } from "lucide-react";
 import { Button } from "@/components/ui/button";
 
-export default function Home() {
+async function HomeContent() {
+  const supabase = await createClient();
+  const { data } = await supabase.auth.getClaims();
+  if (data?.claims) {
+    redirect("/collections");
+  }
+
   return (
     <main className="min-h-screen flex flex-col noise-bg">
       {/* Nav */}
@@ -38,9 +46,7 @@ export default function Home() {
 
         <div className="relative z-10 max-w-3xl mx-auto text-center space-y-8">
           {/* Badge */}
-          <div
-            className="animate-fade-up inline-flex items-center gap-2 px-3 py-1 rounded-full border border-accent/30 bg-accent/10 text-accent text-sm font-medium"
-          >
+          <div className="animate-fade-up inline-flex items-center gap-2 px-3 py-1 rounded-full border border-accent/30 bg-accent/10 text-accent text-sm font-medium">
             <Sparkles className="h-3.5 w-3.5" />
             Your reaction image library
           </div>
@@ -117,6 +123,14 @@ export default function Home() {
         </div>
       </footer>
     </main>
+  );
+}
+
+export default function Home() {
+  return (
+    <Suspense>
+      <HomeContent />
+    </Suspense>
   );
 }
 

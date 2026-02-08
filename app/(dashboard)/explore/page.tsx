@@ -1,55 +1,11 @@
 import { Suspense } from "react";
-import { getExploreFeed, searchPublicImages } from "@/lib/actions/discover";
-import { ExploreGrid } from "@/components/explore-grid";
+import { getExploreFeed } from "@/lib/actions/discover";
 import { LoadMoreFeed } from "@/components/load-more-feed";
-import { Input } from "@/components/ui/input";
-import { Search, Compass } from "lucide-react";
+import { ExploreSearch } from "@/components/explore-search";
+import { Compass } from "lucide-react";
 
-async function ExploreContent({
-  searchParams,
-}: {
-  searchParams: Promise<{ q?: string }>;
-}) {
-  const { q } = await searchParams;
+async function ExploreContent() {
   const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL!;
-
-  if (q && q.trim()) {
-    const images = await searchPublicImages(q.trim());
-
-    return (
-      <div className="space-y-6">
-        <div>
-          <h1 className="text-2xl font-bold">Explore</h1>
-          <p className="text-muted-foreground text-sm mt-1">
-            Discover reaction images from the community
-          </p>
-        </div>
-
-        <form className="relative">
-          <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-          <Input
-            name="q"
-            placeholder="Search public images..."
-            defaultValue={q}
-            className="pl-9"
-          />
-        </form>
-
-        {images.length === 0 ? (
-          <div className="flex flex-col items-center justify-center py-16 text-center">
-            <Search className="h-12 w-12 text-muted-foreground mb-4" />
-            <h2 className="text-lg font-medium">No results found</h2>
-            <p className="text-muted-foreground text-sm mt-1">
-              No images matching &quot;{q}&quot;
-            </p>
-          </div>
-        ) : (
-          <ExploreGrid images={images} supabaseUrl={supabaseUrl} />
-        )}
-      </div>
-    );
-  }
-
   const { images, nextCursor } = await getExploreFeed();
 
   return (
@@ -61,39 +17,28 @@ async function ExploreContent({
         </p>
       </div>
 
-      <form className="relative">
-        <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-        <Input
-          name="q"
-          placeholder="Search public images..."
-          className="pl-9"
-        />
-      </form>
-
-      {images.length === 0 ? (
-        <div className="flex flex-col items-center justify-center py-16 text-center">
-          <Compass className="h-12 w-12 text-muted-foreground mb-4" />
-          <h2 className="text-lg font-medium">Nothing here yet</h2>
-          <p className="text-muted-foreground text-sm mt-1">
-            Public images from the community will appear here.
-          </p>
-        </div>
-      ) : (
-        <LoadMoreFeed
-          initialImages={images}
-          initialCursor={nextCursor}
-          supabaseUrl={supabaseUrl}
-        />
-      )}
+      <ExploreSearch supabaseUrl={supabaseUrl}>
+        {images.length === 0 ? (
+          <div className="flex flex-col items-center justify-center py-16 text-center">
+            <Compass className="h-12 w-12 text-muted-foreground mb-4" />
+            <h2 className="text-lg font-medium">Nothing here yet</h2>
+            <p className="text-muted-foreground text-sm mt-1">
+              Public images from the community will appear here.
+            </p>
+          </div>
+        ) : (
+          <LoadMoreFeed
+            initialImages={images}
+            initialCursor={nextCursor}
+            supabaseUrl={supabaseUrl}
+          />
+        )}
+      </ExploreSearch>
     </div>
   );
 }
 
-export default function ExplorePage({
-  searchParams,
-}: {
-  searchParams: Promise<{ q?: string }>;
-}) {
+export default function ExplorePage() {
   return (
     <Suspense
       fallback={
@@ -120,7 +65,7 @@ export default function ExplorePage({
         </div>
       }
     >
-      <ExploreContent searchParams={searchParams} />
+      <ExploreContent />
     </Suspense>
   );
 }

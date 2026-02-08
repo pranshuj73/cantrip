@@ -4,19 +4,9 @@ import { createClient } from "@/lib/supabase/server";
 import { revalidatePath } from "next/cache";
 import type { ExploreImage, Collection, Image } from "@/lib/types/database";
 
-// Supabase returns joined relations as arrays; normalize to single objects
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
-function normalizeExploreImage(row: any): ExploreImage {
-  const col = Array.isArray(row.collections)
-    ? row.collections[0]
-    : row.collections;
-  const prof = Array.isArray(col.profiles) ? col.profiles[0] : col.profiles;
-  return { ...row, collections: { ...col, profiles: prof } };
-}
-
 export async function getExploreFeed(
   cursor?: string,
-  limit = 50,
+  limit = 25,
 ): Promise<{ images: ExploreImage[]; nextCursor: string | null }> {
   const supabase = await createClient();
 
@@ -24,9 +14,10 @@ export async function getExploreFeed(
     .from("images")
     .select(
       `id, title, description, thumbnail_path, file_path, blurhash, width, height, created_at, user_id, collection_id,
-       collections!inner(id, name, slug, is_public, user_id, profiles(username, display_name))`,
+       collections!inner(id, name, slug, is_public, is_flagged, user_id)`,
     )
     .eq("collections.is_public", true)
+    .eq("collections.is_flagged", false)
     .eq("is_flagged", false)
     .order("created_at", { ascending: false })
     .limit(limit + 1);
@@ -37,12 +28,47 @@ export async function getExploreFeed(
 
   const { data, error } = await q;
 
-  if (error || !data) return { images: [], nextCursor: null };
+  if (error) {
+    console.error("getExploreFeed error:", error.message, error.details, error.hint);
+    return { images: [], nextCursor: null };
+  }
+  if (!data || data.length === 0) return { images: [], nextCursor: null };
 
   const hasMore = data.length > limit;
   const raw = hasMore ? data.slice(0, limit) : data;
-  const images = raw.map(normalizeExploreImage);
-  const nextCursor = hasMore ? images[images.length - 1].created_at : null;
+
+  // Fetch profiles for the collection owners
+  const ownerIds = [...new Set(raw.map((r) => {
+    const col = Array.isArray(r.collections) ? r.collections[0] : r.collections;
+    return col.user_id as string;
+  }))];
+
+  const { data: profiles } = await supabase
+    .from("profiles")
+    .select("id, username, display_name")
+    .in("id", ownerIds);
+
+  const profileMap = new Map(
+    (profiles ?? []).map((p) => [p.id, { username: p.username, display_name: p.display_name }]),
+  );
+
+  const images: ExploreImage[] = raw.map((row) => {
+    const col = Array.isArray(row.collections) ? row.collections[0] : row.collections;
+    const profile = profileMap.get(col.user_id) ?? { username: "unknown", display_name: null };
+    return {
+      ...row,
+      collections: { id: col.id, name: col.name, slug: col.slug, is_public: col.is_public, user_id: col.user_id, profiles: profile },
+    };
+  });
+
+  // Cursor is based on the last item before shuffling (chronological boundary)
+  const nextCursor = hasMore ? raw[raw.length - 1].created_at : null;
+
+  // Shuffle the batch so the feed feels fresh each visit
+  for (let i = images.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [images[i], images[j]] = [images[j], images[i]];
+  }
 
   return { images, nextCursor };
 }
@@ -57,9 +83,10 @@ export async function searchPublicImages(
     .from("images")
     .select(
       `id, title, description, thumbnail_path, file_path, blurhash, width, height, created_at, user_id, collection_id,
-       collections!inner(id, name, slug, is_public, user_id, profiles(username, display_name))`,
+       collections!inner(id, name, slug, is_public, is_flagged, user_id)`,
     )
     .eq("collections.is_public", true)
+    .eq("collections.is_flagged", false)
     .eq("is_flagged", false)
     .textSearch("search_vector", query, {
       type: "websearch",
@@ -67,8 +94,35 @@ export async function searchPublicImages(
     })
     .limit(limit);
 
-  if (error || !data) return [];
-  return data.map(normalizeExploreImage);
+  if (error) {
+    console.error("searchPublicImages error:", error.message, error.details, error.hint);
+    return [];
+  }
+  if (!data || data.length === 0) return [];
+
+  // Fetch profiles for collection owners
+  const ownerIds = [...new Set(data.map((r) => {
+    const col = Array.isArray(r.collections) ? r.collections[0] : r.collections;
+    return col.user_id as string;
+  }))];
+
+  const { data: profiles } = await supabase
+    .from("profiles")
+    .select("id, username, display_name")
+    .in("id", ownerIds);
+
+  const profileMap = new Map(
+    (profiles ?? []).map((p) => [p.id, { username: p.username, display_name: p.display_name }]),
+  );
+
+  return data.map((row) => {
+    const col = Array.isArray(row.collections) ? row.collections[0] : row.collections;
+    const profile = profileMap.get(col.user_id) ?? { username: "unknown", display_name: null };
+    return {
+      ...row,
+      collections: { id: col.id, name: col.name, slug: col.slug, is_public: col.is_public, user_id: col.user_id, profiles: profile },
+    };
+  });
 }
 
 export async function trackRecentImage(
