@@ -360,7 +360,10 @@ export function ImageUpload({ collectionId }: ImageUploadProps) {
           )}
 
           <div className="space-y-1 max-h-48 overflow-y-auto">
-            {uploads.map((upload) => (
+            {[...uploads].sort((a, b) => {
+              const order = { compressing: 0, uploading: 1, pending: 2, queued: 3, error: 4, success: 5 };
+              return (order[a.status] ?? 2) - (order[b.status] ?? 2);
+            }).map((upload) => (
               <div
                 key={upload.fileId}
                 className="flex items-center gap-2 text-sm py-1"
